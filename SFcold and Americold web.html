@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+
+<html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Cold Chain Strategic Intelligence Dashboard</title> <script src="https://cdn.tailwindcss.com"></script> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+<style>
+    /* Custom Font Import */
+    @import url('[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap)');
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FAFAF9; /* Warm Stone-50 */
+        color: #44403C; /* Stone-700 */
+    }
+
+    /* Chart Container Strict Styling */
+    .chart-container {
+        position: relative;
+        width: 100%;
+        max-width: 800px; /* Max width constraint */
+        margin-left: auto;
+        margin-right: auto;
+        height: 350px; /* Base height */
+        max-height: 400px; /* Max height constraint */
+    }
+    
+    @media (min-width: 768px) {
+        .chart-container {
+            height: 400px;
+        }
+    }
+
+    /* Utility for hiding scrollbar but keeping functionality */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* Interactive Element Styles */
+    .nav-item {
+        transition: all 0.3s ease;
+    }
+    .nav-item:hover, .nav-item.active {
+        background-color: #E7E5E4; /* Stone-200 */
+        color: #0F766E; /* Teal-700 */
+        font-weight: 600;
+        border-right: 4px solid #0F766E;
+    }
+    
+    .flywheel-node {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .flywheel-node:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    .flywheel-node.active-node {
+        border-color: #0F766E;
+        background-color: #F0FDFA; /* Teal-50 */
+    }
+
+    .roadmap-card {
+        transition: all 0.3s ease;
+    }
+    .roadmap-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+</style>
+</head> <body class="h-screen overflow-hidden flex flex-col md:flex-row">
+
+<!-- Sidebar Navigation -->
+<aside class="w-full md:w-64 bg-white border-r border-stone-200 flex flex-col z-20 shadow-sm flex-shrink-0">
+    <div class="p-6 border-b border-stone-100">
+        <h1 class="text-xl font-bold text-stone-800 tracking-tight">ColdChain<span class="text-teal-700">Intel</span></h1>
+        <p class="text-xs text-stone-500 mt-1">Strategic Analysis Report</p>
+    </div>
+    
+    <nav class="flex-1 overflow-y-auto py-4">
+        <ul class="space-y-1">
+            <li>
+                <button onclick="router.navigate('global')" id="nav-global" class="nav-item w-full text-left px-6 py-3 text-sm text-stone-600 flex items-center gap-3">
+                    <span>🌍</span> Global Landscape
+                </button>
+            </li>
+            <li>
+                <button onclick="router.navigate('engine')" id="nav-engine" class="nav-item w-full text-left px-6 py-3 text-sm text-stone-600 flex items-center gap-3">
+                    <span>⚙️</span> The Flywheel Engine
+                </button>
+            </li>
+            <li>
+                <button onclick="router.navigate('gap')" id="nav-gap" class="nav-item w-full text-left px-6 py-3 text-sm text-stone-600 flex items-center gap-3">
+                    <span>📊</span> Strategic Gap
+                </button>
+            </li>
+            <li>
+                <button onclick="router.navigate('roadmap')" id="nav-roadmap" class="nav-item w-full text-left px-6 py-3 text-sm text-stone-600 flex items-center gap-3">
+                    <span>🚀</span> SF Action Roadmap
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="p-6 border-t border-stone-100 bg-stone-50">
+        <div class="text-xs text-stone-400">
+            <p class="font-semibold">Analysis Subject:</p>
+            <p>Lineage Logistics</p>
+            <p>Americold Realty Trust</p>
+            <p>SF Cold Chain</p>
+        </div>
+    </div>
+</aside>
+
+<!-- Main Content Area -->
+<main class="flex-1 h-full overflow-y-auto bg-stone-50 no-scrollbar relative" id="main-content">
+    <!-- Header -->
+    <header class="bg-white sticky top-0 z-10 border-b border-stone-200 px-8 py-4 flex justify-between items-center shadow-sm">
+        <div>
+            <h2 id="page-title" class="text-2xl font-bold text-stone-800">Global Landscape</h2>
+            <p id="page-subtitle" class="text-sm text-stone-500">Market dominance and scale comparison.</p>
+        </div>
+        <div class="text-right hidden sm:block">
+            <span class="inline-flex items-center rounded-full bg-teal-50 px-2 py-1 text-xs font-medium text-teal-700 ring-1 ring-inset ring-teal-600/20">Live Report</span>
+        </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="p-4 md:p-8 max-w-7xl mx-auto space-y-8" id="view-container">
+        <!-- Dynamic Content Injected Here via JS -->
+    </div>
+</main>
+
+<!-- JavaScript Logic -->
+<script>
+    // --- Data Store ---
+    const dataStore = {
+        stats: {
+            lineage: { capacity: 2.9, facilities: 450, color: '#0F766E' }, // Billions CuFt
+            americold: { capacity: 1.5, facilities: 240, color: '#115E59' },
+            sf: { capacity: 0.12, facilities: 50, color: '#0EA5E9' } // Estimated
+        },
+        marketData: {
+            labels: ['Lineage (USA)', 'Americold (USA)', 'US Cold (USA)', 'Nichirei (JP)', 'SF Cold (CN)'],
+            capacity: [2900, 1500, 420, 390, 120], // Million CuFt
+            facilities: [450, 245, 42, 80, 55] // Count
+        },
+        roadmapItems: [
+            { id: 1, category: 'strategic', title: 'Asset-Right Strategy', desc: 'Shift from pure 3PL transport to acquiring "Flagship Hubs" in Tier 1 cities to secure network nodes.', priority: 'High' },
+            { id: 2, category: 'strategic', title: 'C-REIT Exploration', desc: 'Separate real estate assets to unlock capital for expansion, mimicking the Americold model.', priority: 'High' },
+            { id: 3, category: 'strategic', title: 'Inorganic Growth', desc: 'Acquire regional leaders to instantly gain density rather than building slowly.', priority: 'Medium' },
+            { id: 4, category: 'tactical', title: 'Data Unification Platform', desc: 'Build "SF Link" to give customers visibility inside the warehouse, not just on the truck.', priority: 'High' },
+            { id: 5, category: 'tactical', title: 'Tiered Automation', desc: 'Deploy AS/RS only in high-turnover hubs; maintain flexible labor in lower tiers.', priority: 'Medium' },
+            { id: 6, category: 'operational', title: 'Pallet Standardization', desc: 'Enforce standard pallet sizes across all acquired nodes to enable automation.', priority: 'Critical' },
+            { id: 7, category: 'operational', title: 'Blast Freezing JIT', desc: 'Offer premium Just-In-Time freezing services to increase margin per pallet.', priority: 'Medium' },
+            { id: 8, category: 'operational', title: 'Cross-Sell Integration', desc: 'Leverage SF Express couriers to identify B2B cold storage leads.', priority: 'Low' }
+        ]
+    };
+
+    // --- Chart Helper Functions ---
+    const chartHelpers = {
+        wrapLabel: (str, maxChars = 15) => {
+            if (str.length <= maxChars) return str;
+            const words = str.split(' ');
+            const lines = [];
+            let currentLine = words[0];
+            for (let i = 1; i < words.length; i++) {
+                if ((currentLine + " " + words[i]).length < maxChars) {
+                    currentLine += " " + words[i];
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        },
+        tooltipConfig: {
+            callbacks: {
+                title: function(tooltipItems) {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    return Array.isArray(label) ? label.join(' ') : label;
+                }
+            }
+        }
+    };
+
+    // --- View Renderers ---
+
+    const views = {
+        global: {
+            title: "Global Landscape",
+            subtitle: "The scale of the 'Superpower Duopoly' vs. Emerging Players.",
+            render: (container) => {
+                container.innerHTML = `
+                    <!-- Introduction -->
+                    <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6 mb-6">
+                        <p class="text-stone-600 leading-relaxed">
+                            The global cold chain is dominated by two giants: <strong>Lineage Logistics</strong> and <strong>Americold</strong>. 
+                            Their advantage is not just trucks, but <em>network density</em>. This section visualizes the massive scale gap 
+                            that SF Cold Chain faces and the standard established by the global leaders.
+                        </p>
+                    </div>
+
+                    <!-- KPI Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-teal-700">
+                            <h3 class="text-sm font-semibold text-stone-400 uppercase tracking-wider">Lineage Capacity</h3>
+                            <div class="mt-2 flex items-baseline gap-2">
+                                <span class="text-3xl font-bold text-stone-800">2.9B</span>
+                                <span class="text-sm text-stone-500">Cu. Ft.</span>
+                            </div>
+                            <p class="text-xs text-teal-600 mt-2">Global Leader</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-teal-500">
+                            <h3 class="text-sm font-semibold text-stone-400 uppercase tracking-wider">Americold Capacity</h3>
+                            <div class="mt-2 flex items-baseline gap-2">
+                                <span class="text-3xl font-bold text-stone-800">1.5B</span>
+                                <span class="text-sm text-stone-500">Cu. Ft.</span>
+                            </div>
+                            <p class="text-xs text-teal-600 mt-2">Public REIT Leader</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-sky-500">
+                            <h3 class="text-sm font-semibold text-stone-400 uppercase tracking-wider">SF Cold Chain (Est)</h3>
+                            <div class="mt-2 flex items-baseline gap-2">
+                                <span class="text-3xl font-bold text-stone-800">~120M</span>
+                                <span class="text-sm text-stone-500">Cu. Ft.</span>
+                            </div>
+                            <p class="text-xs text-sky-600 mt-2">China Market Leader</p>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Chart Section -->
+                    <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-stone-800">Capacity Wars: Cubic Footage vs. Facilities</h3>
+                            <div class="flex bg-stone-100 rounded-lg p-1 mt-4 sm:mt-0">
+                                <button onclick="updateGlobalChart('capacity')" id="btn-capacity" class="px-4 py-1 text-xs font-medium rounded-md bg-white shadow-sm text-stone-800 transition-all">Capacity (CuFt)</button>
+                                <button onclick="updateGlobalChart('facilities')" id="btn-facilities" class="px-4 py-1 text-xs font-medium rounded-md text-stone-500 hover:text-stone-700 transition-all">Facility Count</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="globalChart"></canvas>
+                        </div>
+                        <p class="text-center text-xs text-stone-400 mt-4">Data Source: GCCA Top 25 Lists & Annual Reports (2024)</p>
+                    </div>
+                `;
+                // Initialize Chart
+                initGlobalChart('capacity');
+            }
+        },
+        engine: {
+            title: "The Ecosystem Engine",
+            subtitle: "The 'REIT + Technology' Flywheel Model.",
+            render: (container) => {
+                container.innerHTML = `
+                    <!-- Intro -->
+                    <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6 mb-6">
+                        <p class="text-stone-600">
+                            The secret sauce of the US giants is the integration of <strong>Real Estate Investment Trust (REIT)</strong> capital structures with high-tech operations. 
+                            Click the nodes in the diagram below to understand how each component drives the next.
+                        </p>
+                    </div>
+
+                    <!-- Split View: Diagram & Details -->
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full">
+                        
+                        <!-- Diagram Column -->
+                        <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-stone-200 p-8 flex flex-col justify-center items-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-500 to-sky-500"></div>
+                            
+                            <!-- Diagram Layout -->
+                            <div class="relative w-full max-w-md aspect-square">
+                                <!-- Node 1: Top -->
+                                <div onclick="showFlywheelDetail(1)" class="flywheel-node absolute top-0 left-1/2 transform -translate-x-1/2 bg-white border-2 border-stone-200 p-4 rounded-xl w-32 text-center z-10 active-node" id="node-1">
+                                    <div class="text-2xl mb-1">🏦</div>
+                                    <div class="text-xs font-bold text-stone-700">REIT Capital</div>
+                                </div>
+                                
+                                <!-- Arrow Right Down -->
+                                <div class="absolute top-1/4 right-10 text-stone-300 text-4xl transform rotate-45">↓</div>
+
+                                <!-- Node 2: Right -->
+                                <div onclick="showFlywheelDetail(2)" class="flywheel-node absolute top-1/2 right-0 transform -translate-y-1/2 bg-white border-2 border-stone-200 p-4 rounded-xl w-32 text-center z-10" id="node-2">
+                                    <div class="text-2xl mb-1">🏗️</div>
+                                    <div class="text-xs font-bold text-stone-700">Acquisitions</div>
+                                </div>
+
+                                <!-- Arrow Left Down -->
+                                <div class="absolute bottom-1/4 right-10 text-stone-300 text-4xl transform rotate-135">↓</div>
+
+                                <!-- Node 3: Bottom -->
+                                <div onclick="showFlywheelDetail(3)" class="flywheel-node absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-white border-2 border-stone-200 p-4 rounded-xl w-32 text-center z-10" id="node-3">
+                                    <div class="text-2xl mb-1">🕸️</div>
+                                    <div class="text-xs font-bold text-stone-700">Network Density</div>
+                                </div>
+
+                                <!-- Arrow Left Up -->
+                                <div class="absolute bottom-1/4 left-10 text-stone-300 text-4xl transform rotate-225">↓</div>
+
+                                <!-- Node 4: Left -->
+                                <div onclick="showFlywheelDetail(4)" class="flywheel-node absolute top-1/2 left-0 transform -translate-y-1/2 bg-white border-2 border-stone-200 p-4 rounded-xl w-32 text-center z-10" id="node-4">
+                                    <div class="text-2xl mb-1">⚡</div>
+                                    <div class="text-xs font-bold text-stone-700">Tech Efficiency</div>
+                                </div>
+
+                                <!-- Arrow Right Up -->
+                                <div class="absolute top-1/4 left-10 text-stone-300 text-4xl transform rotate-315">↓</div>
+                                
+                                <!-- Center Hub -->
+                                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-stone-50 rounded-full flex items-center justify-center border border-stone-200">
+                                    <span class="text-xs font-bold text-stone-400 text-center">Profit<br>Engine</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detail Column -->
+                        <div class="lg:col-span-2 bg-stone-100 rounded-xl p-6 border border-stone-200 flex flex-col justify-center">
+                            <div id="flywheel-content" class="transition-opacity duration-300">
+                                <div class="inline-block px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-bold mb-4">Step 1</div>
+                                <h3 class="text-xl font-bold text-stone-800 mb-3">REIT Capital Structure</h3>
+                                <p class="text-sm text-stone-600 mb-4 leading-relaxed">
+                                    By operating as a Real Estate Investment Trust, companies like Americold minimize corporate tax and access low-cost capital markets. This financial advantage is the "fuel" for the engine.
+                                </p>
+                                <div class="bg-white p-4 rounded-lg border border-stone-200">
+                                    <h4 class="text-xs font-bold text-stone-500 uppercase mb-2">Key Metric</h4>
+                                    <p class="text-lg font-bold text-teal-700">Lower Cost of Capital</p>
+                                    <p class="text-xs text-stone-400">Enables rapid M&A</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        },
+        gap: {
+            title: "Strategic Gap Analysis",
+            subtitle: "Where SF Cold Chain stands versus the Global Giants.",
+            render: (container) => {
+                container.innerHTML = `
+                    <!-- Intro -->
+                    <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6 mb-6">
+                        <p class="text-stone-600">
+                            The chasm between Chinese and US players isn't just size; it's the <strong>business model</strong>. 
+                            While US giants are "Asset-Heavy" (owning the nodes), Chinese firms are typically "Transportation-Heavy" (moving goods between others' nodes).
+                            The plot below illustrates this strategic positioning.
+                        </p>
+                    </div>
+
+                    <!-- Plotly Chart -->
+                    <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
+                        <div id="gapChart" class="w-full h-[500px]"></div>
+                    </div>
+
+                    <!-- Comparison Table -->
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-xl border-l-4 border-stone-300 shadow-sm">
+                            <h3 class="text-lg font-bold text-stone-700 mb-2">🇺🇸 US Model (Americold)</h3>
+                            <ul class="text-sm text-stone-600 space-y-2">
+                                <li class="flex items-center gap-2"><span>✅</span> Owns the Real Estate (Asset)</li>
+                                <li class="flex items-center gap-2"><span>✅</span> High Automation (AS/RS)</li>
+                                <li class="flex items-center gap-2"><span>✅</span> Focus: Storage & Yield</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl border-l-4 border-sky-400 shadow-sm">
+                            <h3 class="text-lg font-bold text-stone-700 mb-2">🇨🇳 China Model (Current SF)</h3>
+                            <ul class="text-sm text-stone-600 space-y-2">
+                                <li class="flex items-center gap-2"><span>⚠️</span> Leases Warehouses (OpEx)</li>
+                                <li class="flex items-center gap-2"><span>⚠️</span> High Labor Dependence</li>
+                                <li class="flex items-center gap-2"><span>⚠️</span> Focus: Transport Velocity</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                // Init Plotly
+                setTimeout(initGapChart, 100);
+            }
+        },
+        roadmap: {
+            title: "SF Action Roadmap",
+            subtitle: "Strategic, Tactical, and Operational Recommendations.",
+            render: (container) => {
+                container.innerHTML = `
+                    <!-- Filter Bar -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <button onclick="filterRoadmap('all')" class="roadmap-filter px-4 py-2 rounded-full text-sm font-medium bg-stone-800 text-white shadow-sm transition-colors active-filter" data-filter="all">All Actions</button>
+                        <button onclick="filterRoadmap('strategic')" class="roadmap-filter px-4 py-2 rounded-full text-sm font-medium bg-white text-stone-600 border border-stone-200 hover:border-stone-400 transition-colors" data-filter="strategic">Strategic</button>
+                        <button onclick="filterRoadmap('tactical')" class="roadmap-filter px-4 py-2 rounded-full text-sm font-medium bg-white text-stone-600 border border-stone-200 hover:border-stone-400 transition-colors" data-filter="tactical">Tactical</button>
+                        <button onclick="filterRoadmap('operational')" class="roadmap-filter px-4 py-2 rounded-full text-sm font-medium bg-white text-stone-600 border border-stone-200 hover:border-stone-400 transition-colors" data-filter="operational">Operational</button>
+                    </div>
+
+                    <!-- Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="roadmap-grid">
+                        ${renderRoadmapCards(dataStore.roadmapItems)}
+                    </div>
+                `;
+            }
+        }
+    };
+
+    // --- View Logic ---
+
+    const router = {
+        current: 'global',
+        navigate: (viewId) => {
+            // Update State
+            router.current = viewId;
+            
+            // Update UI Nav
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${viewId}`).classList.add('active');
+
+            // Update Header
+            const viewData = views[viewId];
+            document.getElementById('page-title').innerText = viewData.title;
+            document.getElementById('page-subtitle').innerText = viewData.subtitle;
+
+            // Render Content
+            const container = document.getElementById('view-container');
+            container.innerHTML = ''; // Clear
+            viewData.render(container);
+        }
+    };
+
+    // --- Component Functions ---
+
+    // Global Chart
+    let globalChartInstance = null;
+    function initGlobalChart(metric) {
+        const ctx = document.getElementById('globalChart').getContext('2d');
+        const isCapacity = metric === 'capacity';
+        const data = isCapacity ? dataStore.marketData.capacity : dataStore.marketData.facilities;
+        const label = isCapacity ? 'Capacity (Million Cu. Ft.)' : 'Facility Count';
+
+        // Wrap labels
+        const wrappedLabels = dataStore.marketData.labels.map(l => chartHelpers.wrapLabel(l));
+
+        globalChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: wrappedLabels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: [
+                        '#0F766E', // Lineage
+                        '#115E59', // Americold
+                        '#A8A29E', // US Cold
+                        '#D6D3D1', // Nichirei
+                        '#0EA5E9'  // SF
+                    ],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: chartHelpers.tooltipConfig
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#F5F5F4' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Update button styles
+        document.getElementById('btn-capacity').classList.toggle('bg-white', isCapacity);
+        document.getElementById('btn-capacity').classList.toggle('text-stone-800', isCapacity);
+        document.getElementById('btn-capacity').classList.toggle('shadow-sm', isCapacity);
+        
+        document.getElementById('btn-facilities').classList.toggle('bg-white', !isCapacity);
+        document.getElementById('btn-facilities').classList.toggle('text-stone-800', !isCapacity);
+        document.getElementById('btn-facilities').classList.toggle('shadow-sm', !isCapacity);
+    }
+
+    function updateGlobalChart(metric) {
+        if(globalChartInstance) globalChartInstance.destroy();
+        initGlobalChart(metric);
+    }
+
+    // Flywheel Logic
+    const flywheelDetails = {
+        1: { title: "REIT Capital Structure", text: "By operating as a REIT, companies minimize tax and access low-cost capital markets. This financial advantage is the 'fuel' for the engine.", metric: "Lower Cost of Capital", sub: "Enables M&A" },
+        2: { title: "Aggressive Acquisitions", text: "Capital is deployed to buy regional cold storage leaders. Lineage acquired over 100 companies in 10 years to build density.", metric: "100+ Acquisitions", sub: "Rapid Scale-up" },
+        3: { title: "Network Density", text: "Owning warehouses at key ports and production hubs creates a barrier to entry. Density reduces transit times and 'empty miles'.", metric: "Global Nodes", sub: "Reduces Transit Cost" },
+        4: { title: "Tech Efficiency", text: "With massive scale, data is unified. Algorithms optimize energy use (blast freezing) and labor (AS/RS automation), increasing margins.", metric: "30% Efficiency Gain", sub: "Higher Yields" }
+    };
+
+    function showFlywheelDetail(step) {
+        const content = document.getElementById('flywheel-content');
+        const data = flywheelDetails[step];
+        
+        // Visual feedback on nodes
+        document.querySelectorAll('.flywheel-node').forEach(n => {
+            n.classList.remove('active-node', 'border-teal-500', 'bg-teal-50');
+            n.classList.add('border-stone-200');
+        });
+        const active = document.getElementById(`node-${step}`);
+        active.classList.add('active-node', 'border-teal-500', 'bg-teal-50');
+        active.classList.remove('border-stone-200');
+
+        // Update Text
+        content.style.opacity = 0;
+        setTimeout(() => {
+            content.innerHTML = `
+                <div class="inline-block px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-bold mb-4">Step ${step}</div>
+                <h3 class="text-xl font-bold text-stone-800 mb-3">${data.title}</h3>
+                <p class="text-sm text-stone-600 mb-4 leading-relaxed">${data.text}</p>
+                <div class="bg-white p-4 rounded-lg border border-stone-200">
+                    <h4 class="text-xs font-bold text-stone-500 uppercase mb-2">Key Metric</h4>
+                    <p class="text-lg font-bold text-teal-700">${data.metric}</p>
+                    <p class="text-xs text-stone-400">${data.sub}</p>
+                </div>
+            `;
+            content.style.opacity = 1;
+        }, 300);
+    }
+
+    // Plotly Gap Chart
+    function initGapChart() {
+        const trace1 = {
+            x: [85, 80, 90], // Tech/Maturity
+            y: [90, 85, 50], // Asset Density
+            mode: 'markers+text',
+            type: 'scatter',
+            name: 'Global Giants',
+            text: ['Lineage', 'Americold', 'Nichirei'],
+            textposition: 'top center',
+            marker: { size: 25, color: '#0F766E' }
+        };
+
+        const trace2 = {
+            x: [35, 45, 25],
+            y: [60, 40, 30],
+            mode: 'markers+text',
+            type: 'scatter',
+            name: 'Chinese Players',
+            text: ['SF Cold', 'JD Cold', 'Shuanghui'],
+            textposition: 'bottom center',
+            marker: { size: 18, color: '#0EA5E9' }
+        };
+
+        const layout = {
+            title: { text: '', font: { size: 1 } }, // Hide default title
+            xaxis: { 
+                title: 'Tech & Automation Maturity', 
+                range: [10, 100], 
+                showgrid: true, 
+                gridcolor: '#E7E5E4' 
+            },
+            yaxis: { 
+                title: 'Asset Ownership & Density', 
+                range: [10, 100], 
+                showgrid: true, 
+                gridcolor: '#E7E5E4' 
+            },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            showlegend: true,
+            legend: { orientation: 'h', y: -0.2 },
+            margin: { l: 50, r: 20, t: 20, b: 50 },
+            font: { family: 'Inter, sans-serif', color: '#44403C' }
+        };
+
+        const config = { responsive: true, displayModeBar: false };
+        Plotly.newPlot('gapChart', [trace1, trace2], layout, config);
+    }
+
+    // Roadmap Renderer
+    function renderRoadmapCards(items) {
+        return items.map(item => `
+            <div class="roadmap-card bg-white p-6 rounded-xl border border-stone-200 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full ${getPriorityColor(item.priority)}"></div>
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-stone-400 border border-stone-200 px-2 py-0.5 rounded">${item.category}</span>
+                    <span class="text-xs font-bold ${getPriorityTextColor(item.priority)}">${item.priority} Priority</span>
+                </div>
+                <h3 class="text-lg font-bold text-stone-800 mb-2">${item.title}</h3>
+                <p class="text-sm text-stone-600 leading-relaxed">${item.desc}</p>
+            </div>
+        `).join('');
+    }
+
+    function getPriorityColor(p) {
+        if(p === 'Critical') return 'bg-red-500';
+        if(p === 'High') return 'bg-orange-500';
+        return 'bg-teal-500';
+    }
+    
+    function getPriorityTextColor(p) {
+        if(p === 'Critical') return 'text-red-500';
+        if(p === 'High') return 'text-orange-500';
+        return 'text-teal-500';
+    }
+
+    function filterRoadmap(category) {
+        // Update Buttons
+        document.querySelectorAll('.roadmap-filter').forEach(btn => {
+            if(btn.dataset.filter === category) {
+                btn.classList.add('bg-stone-800', 'text-white');
+                btn.classList.remove('bg-white', 'text-stone-600');
+            } else {
+                btn.classList.remove('bg-stone-800', 'text-white');
+                btn.classList.add('bg-white', 'text-stone-600');
+            }
+        });
+
+        // Filter Data
+        const items = category === 'all' 
+            ? dataStore.roadmapItems 
+            : dataStore.roadmapItems.filter(i => i.category === category);
+        
+        // Re-render
+        const grid = document.getElementById('roadmap-grid');
+        grid.innerHTML = renderRoadmapCards(items);
+    }
+
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', () => {
+        router.navigate('global');
+    });
+
+</script>
+</body> </html>
